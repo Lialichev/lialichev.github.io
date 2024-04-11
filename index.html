@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Dynamic URL Horizontal SP Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.2.0"></script>
+</head>
+<body>
+<canvas id="spChartHorizontal" width="800" height="400"></canvas>
+<script type="application/javascript">
+    (async () => {
+        // Функция для получения параметров из URL
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Получаем URL из GET параметра 'dataUrl'
+        const dataUrl = getParameterByName('dataUrl');
+        if (!dataUrl) {
+            alert('Data URL not specified in the query string');
+            return;
+        }
+
+        const response = await fetch(dataUrl);
+        const data = await response.json();
+        console.log(data);
+
+        const ctx = document.getElementById('spChartHorizontal').getContext('2d');
+        const spChartHorizontal = new Chart(ctx, {
+            type: 'bar', // Используем тип bar и настраиваем его для горизонтального отображения
+            data: {
+                labels: data.map(item => item.name),
+                datasets: [{
+                    label: 'SP за последние 30 дней',
+                    data: data.map(item => item.last30SP),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    xAxisID: 'x-axis-1'
+                }, {
+                    label: 'SP за предыдущие 30 дней',
+                    data: data.map(item => item.prev30SP),
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1,
+                    xAxisID: 'x-axis-1'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                scales: {
+                    'x-axis-1': {
+                        position: 'bottom',
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'point',
+                        intersect: true
+                    },
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                mode: 'vertical',
+                                scaleID: 'x-axis-1',
+                                value: 20,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                label: {
+                                    enabled: true,
+                                    content: 'Норма 20 SP',
+                                    position: 'end',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.85)'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })();
+</script>
+</body>
+</html>
